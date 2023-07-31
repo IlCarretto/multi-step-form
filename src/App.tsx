@@ -1,24 +1,25 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from "react";
+import StepSidebar from "./components/StepSidebar/StepSidebar";
+import StepForm from "./components/StepForm/StepForm";
+
+export interface IFormData {
+  [key: string]: number | string;
+}
 
 function App() {
+  const steps = [1, 2, 3, 4];
+  const [currentStep, setCurrentStep] = useState(1);
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <main>
+        <StepSidebar currentStep={currentStep} steps={steps} />
+        <StepForm
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          steps={steps}
+        />
+      </main>
     </div>
   );
 }

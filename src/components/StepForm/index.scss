@@ -1,0 +1,77 @@
+@import '../../index.css';
+.form {
+    border-radius: 12px;
+    background: #fff;
+    padding: 1rem;
+    margin: 0 1rem;
+    position: absolute;
+    top: 7rem;
+    
+    .title {
+        color: var(--marine-blue);
+    }
+
+    .subtitle {
+        color: var(--cool-gray);
+    }
+
+    .ms-input-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 12px;
+
+        input[type="text"],
+        input[type="email"],
+        input[type="number"] {
+            border: 1px solid var(--light-gray);
+            border-radius: 4px;
+            padding: 4px 0;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--marine-blue);
+        }
+    }
+
+    .btn-group {
+        display: flex;
+        justify-content: end;
+
+        .btn-prev,
+        .btn-next,
+        .btn-submit {
+            border-radius: 4px;
+            padding: 8px;
+        }
+    
+        .btn-prev {
+            background: var(--light-gray);
+            color: var(--marine-blue);
+        }
+    
+        .btn-next,
+        .btn-submit {
+            color: #fff;
+            background: var(--marine-blue);
+        }
+    }
+}
+
+@media (min-width: 769px) {
+    .form {
+        padding: 3rem;
+        position: static;
+        width: 500px;
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .btn-group {
+        }
+    }
+}
