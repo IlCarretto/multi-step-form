@@ -13,7 +13,11 @@ function App() {
   return (
     <div className="App">
       <main>
-        <StepSidebar currentStep={currentStep} steps={steps} />
+        <StepSidebar
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}
+          steps={steps}
+        />
         <StepForm
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}

@@ -3,10 +3,11 @@ import "./index.scss";
 
 interface IProps {
   currentStep: number;
+  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   steps: number[];
 }
 
-const StepSidebar = ({ currentStep, steps }: IProps) => {
+const StepSidebar = ({ currentStep, setCurrentStep, steps }: IProps) => {
   const stepTitles = ["YOUR INFO", "SELECT PLAN", "ADD-ONS", "SUMMARY"];
 
   return (
@@ -14,6 +15,7 @@ const StepSidebar = ({ currentStep, steps }: IProps) => {
       {steps.map((step, index) => {
         return (
           <div
+            onClick={() => setCurrentStep(step)}
             key={index}
             className={`step ${currentStep === step ? "active" : ""}`}
           >
