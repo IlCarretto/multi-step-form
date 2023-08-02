@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { IFormData } from "../../App";
 import { schemaStep1, schemaStep2 } from "./schema/schemaSteps";
 import { ZodType } from "zod";
-import { fromZodError } from "zod-validation-error";
 import "./index.scss";
-import { useForm } from "react-hook-form";
+import Input from "../Input/Input";
+import { formatValue } from "../../utils/formatValue";
+import { calculateTotalPrice } from "../../utils/calculateTotalPrice";
+
+interface NestedObject {
+  [key: string]: number | string | NestedObject;
+}
+
+export interface IFormData {
+  [key: string]: number | string | NestedObject;
+}
 
 interface IProps {
   currentStep: number;
@@ -39,11 +47,11 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
       title: "Personal info",
       subtitle: "Please provide your name, email address, and phone number.",
       inputs: [
-        { name: "name", id: "name", label: "Name", type: "text", value: "" },
+        { name: "name", id: "name", label: "Name *", type: "text", value: "" },
         {
           name: "email",
           id: "email",
-          label: "Email Address",
+          label: "Email Address *",
           type: "email",
           value: "",
         },
@@ -136,15 +144,57 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
   ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, id } = e.target;
+    const value2 =
+      type === "radio" || type === "checkbox"
+        ? {
+            serviceName: formatValue(id),
+            price: +value,
+          }
+        : type === 'number' ? +value : value
     if (type === "number") {
       setFormData((prevFormData) => ({
         ...prevFormData,
-        [name]: +value,
+        [name]: +value2,
       }));
-    } else {
-      setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
+    } else if (type === "radio" || type === "checkbox") {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: value2,
+      }));
     }
+    // else if (type === "checkbox") {
+    //   setFormData((prevFormData) => ({
+    //     ...prevFormData,
+    //     extra: {
+    //       [name]: {
+    //         serviceName: formatValue(id),
+    //         price: +value,
+    //       },
+    //     },
+    //   }));
+    else {
+      setFormData((prevFormData) => ({ ...prevFormData, [name]: value2 }));
+    }
+    if (currentStep === 1 || currentStep === 2) {
+      const currentFormSchema = formSchemas[currentStep];
+      const results = currentFormSchema.safeParse({
+        ...formData,
+        [name]: value2,
+      });
+      if (!results.success) {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          [currentStep]: {
+            ...results.error.formErrors.fieldErrors,
+            [name]: results.error.formErrors.fieldErrors[name] || null,
+          },
+        }));
+      } else {
+        setErrors({});
+      }
+    }
+    console.log(formData);
   };
 
   const handleNextStep = () => {
@@ -156,17 +206,15 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
           ...prevErrors,
           [currentStep]: results.error.formErrors.fieldErrors,
         }));
+      } else {
+        setErrors({});
       }
     }
     setCurrentStep((prevStep) => prevStep + 1);
-    console.log(formData);
   };
 
   useEffect(() => {
     console.log(errors);
-    if (errors && errors["1"]) {
-      console.log(errors["1"]["name"][0]);
-    }
   }, [errors]);
 
   const handlePrevStep = () => {
@@ -207,116 +255,124 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
             <h1 className="title">{title}</h1>
             <p className="subtitle">{subtitle}</p>
             {inputs.map((input, index) => {
-              const {
-                type,
-                name,
-                label,
-                value,
-                monthlyPrice,
-                yearlyPrice,
-                id,
-                subtext,
-              } = input;
-              console.log(errors);
-              console.log(currentStep);
               return (
                 <>
-                  {!!errors && errors[currentStep] && (
-                    <p>{errors[currentStep][name][0]}</p>
-                  )}
-                  <div
+                  <Input
                     key={index}
-                    className={`ms-input-group ${
-                      type === "radio" ? "d-inline-block" : ""
-                    } ${id === "advanced" || id === "pro" ? "ms-3" : ""}`}
-                  >
-                    <label
-                      className={`${
-                        type === "radio"
-                          ? "radio-label"
-                          : type === "checkbox"
-                          ? "check-label"
-                          : ""
-                      }`}
-                      htmlFor={id}
-                    >
-                      {type === "radio" ? (
-                        <>
-                          <div className="label-img">
-                            <img
-                              width="50"
-                              height="50"
-                              src={`../../../public/icon-${label.toLocaleLowerCase()}.svg`}
-                              alt={`${label}-icon`}
-                            />
-                          </div>
-                          <div className="label-content">
-                            <h5>{label}</h5>
-                            <span>
-                              $ {isMonthly ? monthlyPrice : yearlyPrice}/
-                              {isMonthly ? "mo" : "yr"}
-                            </span>
-                            {!isMonthly && <small>2 months free</small>}{" "}
-                          </div>
-                        </>
-                      ) : type === "checkbox" ? (
-                        <div className="checkbox-wrapper">
-                          <div className="checkbox">
-                            <input
-                              id={id}
-                              type={type}
-                              name={name}
-                              value={value}
-                              onChange={handleChange}
-                            ></input>
-                          </div>
-                          <div className="checkbox-title">
-                            <h6>{label}</h6>
-                            <span>{subtext}</span>
-                          </div>
-                          <div className="checkbox-footer">
-                            <span>
-                              $ {isMonthly ? monthlyPrice : yearlyPrice}/
-                              {isMonthly ? "mo" : "yr"}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <>{label}</>
-                      )}
-                    </label>
-                    {type === "radio" ? (
-                      <input
-                        id={id}
-                        type={type}
-                        name={name}
-                        value={value}
-                        onChange={handleChange}
-                      />
-                    ) : type !== "checkbox" ? (
-                      <input
-                        id={id}
-                        type={type}
-                        name={name}
-                        onChange={handleChange}
-                      />
-                    ) : (
-                      ""
+                    {...input}
+                    isMonthly={isMonthly}
+                    onChange={handleChange}
+                    value={formData || ""}
+                    errors={errors}
+                    currentStep={currentStep}
+                  />
+                  {((index === 2 && currentStep === 2) || currentStep !== 2) &&
+                    !!errors &&
+                    (errors as any)[currentStep] &&
+                    (errors as any)[currentStep][input.name] && (
+                      <p className="error">
+                        {(errors as any)[currentStep][input.name][0]}
+                      </p>
                     )}
-                  </div>
                 </>
               );
             })}
             {currentStep === 2 && (
               <div className="switch-tab">
                 <span>Monthly</span>
-                <button
-                  type="button"
+                <input
+                  id="switch-sub"
+                  type="checkbox"
+                  value=""
                   className={`switch-button ${isMonthly ? "monthly" : ""}`}
-                  onClick={() => setIsMonthly(!isMonthly)}
-                ></button>
+                  onChange={() => setIsMonthly(!isMonthly)}
+                />
+                <label htmlFor="switch-sub"></label>
                 <span>Yearly</span>
               </div>
+            )}
+            {currentStep === steps.length && (
+              <>
+                <div className="summary">
+                  {!!formData.plan && (formData as any).plan.serviceName ? (
+                    <>
+                      <div>
+                        <div className="service">
+                          <h5>
+                            {(formData as any).plan.serviceName}
+                            {isMonthly ? " (Monthly)" : " (Yearly)"}
+                          </h5>
+                          <span onClick={() => setCurrentStep(2)}>Change</span>
+                        </div>
+                        <div className="price">
+                          <span className="plan-price">
+                            {`$${(formData as any).plan.price}/`}
+                            {isMonthly ? "mo" : "yr"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="line"></div>
+                      {(formData as any)["online-service"] && (
+                        <div>
+                          <div className="service">
+                            <p>
+                              {(formData as any)["online-service"].serviceName}
+                            </p>
+                          </div>
+                          <div className="price">
+                            <span>
+                              {`$${(formData as any)["online-service"].price}/`}
+                              {isMonthly ? "mo" : "yr"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {(formData as any)["larger-storage"] && (
+                        <div>
+                          <div className="service">
+                            <p>
+                              {(formData as any)["larger-storage"].serviceName}
+                            </p>
+                          </div>
+                          <div className="price">
+                            <span>
+                              {`$${(formData as any)["larger-storage"].price}/`}
+                              {isMonthly ? "mo" : "yr"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {(formData as any)["customizable"] && (
+                        <div>
+                          <div className="service">
+                            <p>
+                              {(formData as any)["customizable"].serviceName}
+                            </p>
+                          </div>
+                          <div className="price">
+                            <span>
+                              {`$${(formData as any)["customizable"].price}/`}
+                              {isMonthly ? "mo" : "yr"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    "Enter your plan first"
+                  )}
+                </div>
+                <div className="total">
+                  <p>
+                    Total
+                    {isMonthly ? " (per month)" : " (per year)"}
+                  </p>
+                  <h4>
+                    {`$${calculateTotalPrice(formData)}/`}
+                    {isMonthly ? "mo" : "yr"}
+                  </h4>
+                </div>
+              </>
             )}
           </div>
           <div
@@ -346,7 +402,7 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
             )}
             {currentStep === steps.length && (
               <button
-                type="submit"
+                type="button"
                 onSubmit={handleFormSubmit}
                 className="btn-submit"
               >

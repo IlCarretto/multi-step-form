@@ -44,3 +44,15 @@ button {
     height: 500px;
   }
 }
+
+.error {
+  color: var(--strawberry-red);
+  font-size: 12px;
+  text-align: end;
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.input-error {
+  border: 1px solid var(--strawberry-red)!important;
+}
