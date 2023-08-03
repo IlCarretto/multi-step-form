@@ -14,6 +14,7 @@ interface InputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   errors: {};
   currentStep: number;
+  selectedPlan: string;
 }
 
 const Input = ({
@@ -29,6 +30,7 @@ const Input = ({
   onChange,
   errors,
   currentStep,
+  selectedPlan,
 }: InputProps) => {
   return (
     <div
@@ -43,7 +45,7 @@ const Input = ({
             : type === "checkbox"
             ? "check-label"
             : ""
-        }`}
+        } ${selectedPlan === id && "checked"}`}
         htmlFor={id}
       >
         {type === "radio" ? (

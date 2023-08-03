@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { schemaStep1, schemaStep2 } from "./schema/schemaSteps";
 import { ZodType } from "zod";
 import "./index.scss";
 import Input from "../Input/Input";
 import { formatValue } from "../../utils/formatValue";
 import { calculateTotalPrice } from "../../utils/calculateTotalPrice";
+import { useErrorsContext } from "../../context/ErrorContext";
 
 interface NestedObject {
   [key: string]: number | string | NestedObject;
@@ -38,8 +39,9 @@ interface IStepsData {
 
 const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
   const [formData, setFormData] = useState<IFormData>({});
-  const [errors, setErrors] = useState({});
-  const [isMonthly, setIsMonthly] = useState(true);
+  const { errors, setErrors } = useErrorsContext();
+  const [isMonthly, setIsMonthly] = useState<boolean>(true);
+  const [selectedPlan, setSelectedPlan] = useState("");
 
   const stepsData: IStepsData[] = [
     {
@@ -145,56 +147,49 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, id } = e.target;
-    const value2 =
+    const fixedValue =
       type === "radio" || type === "checkbox"
         ? {
             serviceName: formatValue(id),
             price: +value,
           }
-        : type === 'number' ? +value : value
+        : type === "number"
+        ? +value
+        : value;
     if (type === "number") {
       setFormData((prevFormData) => ({
         ...prevFormData,
-        [name]: +value2,
+        [name]: fixedValue,
       }));
     } else if (type === "radio" || type === "checkbox") {
       setFormData((prevFormData) => ({
         ...prevFormData,
-        [name]: value2,
+        [name]: fixedValue,
       }));
-    }
-    // else if (type === "checkbox") {
-    //   setFormData((prevFormData) => ({
-    //     ...prevFormData,
-    //     extra: {
-    //       [name]: {
-    //         serviceName: formatValue(id),
-    //         price: +value,
-    //       },
-    //     },
-    //   }));
-    else {
-      setFormData((prevFormData) => ({ ...prevFormData, [name]: value2 }));
+      if (type === "radio") {
+        setSelectedPlan(id);
+      }
+    } else {
+      setFormData((prevFormData) => ({ ...prevFormData, [name]: fixedValue }));
     }
     if (currentStep === 1 || currentStep === 2) {
       const currentFormSchema = formSchemas[currentStep];
       const results = currentFormSchema.safeParse({
         ...formData,
-        [name]: value2,
+        [name]: fixedValue,
       });
       if (!results.success) {
-        setErrors((prevErrors) => ({
+        setErrors((prevErrors: any) => ({
           ...prevErrors,
           [currentStep]: {
             ...results.error.formErrors.fieldErrors,
-            [name]: results.error.formErrors.fieldErrors[name] || null,
+            [name]: results.error.formErrors.fieldErrors[name],
           },
         }));
       } else {
         setErrors({});
       }
     }
-    console.log(formData);
   };
 
   const handleNextStep = () => {
@@ -202,7 +197,7 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
       const currentFormSchema = formSchemas[currentStep];
       const results = currentFormSchema.safeParse(formData);
       if (!results.success) {
-        setErrors((prevErrors) => ({
+        setErrors((prevErrors: any) => ({
           ...prevErrors,
           [currentStep]: results.error.formErrors.fieldErrors,
         }));
@@ -212,10 +207,6 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
     }
     setCurrentStep((prevStep) => prevStep + 1);
   };
-
-  useEffect(() => {
-    console.log(errors);
-  }, [errors]);
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
@@ -230,13 +221,7 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
 
   const handleFormSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    const currentFormSchema = formSchemas[currentStep];
-    try {
-      const validateForm = currentFormSchema.parse(formData);
-      console.log("Validated Data", validateForm);
-    } catch (err) {
-      console.log("Validation Err");
-    }
+    console.log("Validated Data", formData);
   };
 
   const currentStepData = stepsData.find(
@@ -265,6 +250,7 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
                     value={formData || ""}
                     errors={errors}
                     currentStep={currentStep}
+                    selectedPlan={selectedPlan}
                   />
                   {((index === 2 && currentStep === 2) || currentStep !== 2) &&
                     !!errors &&
@@ -402,8 +388,16 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
             )}
             {currentStep === steps.length && (
               <button
+                disabled={
+                  !(
+                    errors &&
+                    Object.entries(errors).length === 0 &&
+                    !!formData.plan &&
+                    (formData as any).plan.serviceName
+                  )
+                }
                 type="button"
-                onSubmit={handleFormSubmit}
+                onClick={handleFormSubmit}
                 className="btn-submit"
               >
                 Confirm

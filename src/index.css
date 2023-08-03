@@ -56,3 +56,8 @@ button {
 .input-error {
   border: 1px solid var(--strawberry-red)!important;
 }
+
+.circle-error {
+  border: 1px solid red;
+  background-color: var(--strawberry-red);
+}

@@ -10,9 +10,14 @@ export const schemaStep1 = z.object({
   phone: z.number().optional(),
 });
 
+const planSchema = z.object({
+  serviceName: z.string().nonempty(),
+  price: z.number(),
+});
+
 export const schemaStep2 = z.object({
-  plan: z.object({
-    planName: z.string(),
-    price: z.number(),
+  plan: planSchema.optional().refine((val) => !!val, {
+    message: "Please select a plan",
+    path: ["plan"],
   }),
 });
