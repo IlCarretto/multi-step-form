@@ -61,3 +61,7 @@ button {
   border: 1px solid red;
   background-color: var(--strawberry-red);
 }
+
+.hidden{
+  display: none!important;
+}

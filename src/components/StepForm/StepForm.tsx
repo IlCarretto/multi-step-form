@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { schemaStep1, schemaStep2 } from "./schema/schemaSteps";
 import { ZodType } from "zod";
 import "./index.scss";
@@ -42,7 +42,9 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
   const { errors, setErrors } = useErrorsContext();
   const [isMonthly, setIsMonthly] = useState<boolean>(true);
   const [selectedPlan, setSelectedPlan] = useState("");
-
+  const formRef = useRef<HTMLDivElement | null>(null);
+  const btnGroupRef = useRef<HTMLDivElement | null>(null);
+  const thankYouRef = useRef<HTMLDivElement | null>(null);
   const stepsData: IStepsData[] = [
     {
       step: 1,
@@ -222,6 +224,11 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
   const handleFormSubmit = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     console.log("Validated Data", formData);
+    if (formRef.current && thankYouRef.current && btnGroupRef.current) {
+      formRef.current.classList.add("hidden");
+      btnGroupRef.current.classList.add("hidden");
+      thankYouRef.current.classList.remove("d-none");
+    }
   };
 
   const currentStepData = stepsData.find(
@@ -236,7 +243,7 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
     <div className="row">
       <div className="col-12 d-flex justify-content-center">
         <form className="form">
-          <div className="form-main">
+          <div className="form-main" ref={formRef}>
             <h1 className="title">{title}</h1>
             <p className="subtitle">{subtitle}</p>
             {inputs.map((input, index) => {
@@ -361,7 +368,17 @@ const StepForm = ({ currentStep, setCurrentStep, steps }: IProps) => {
               </>
             )}
           </div>
+          <div className="thank-you-page d-none" ref={thankYouRef}>
+            <img src="icon-thank-you.svg" alt="Form Submitted Check" />
+            <h1 className="mt-4">Thank you!</h1>
+            <p className="text-center">
+              Thanks for confirming your subscription! We hope you have fun
+              using our platform. If you ever need support, please feel free to
+              email us at support@loremgaming.com
+            </p>
+          </div>
           <div
+            ref={btnGroupRef}
             className={`btn-group ${
               currentStep === 1
                 ? "justify-content-end"
