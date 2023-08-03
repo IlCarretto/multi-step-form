@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { schemaStep1, schemaStep2 } from "./schema/schemaSteps";
 import { ZodType } from "zod";
 import "./index.scss";
